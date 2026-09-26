@@ -92,17 +92,39 @@ Customer email
 | Resource | Name | Purpose |
 |----------|------|---------|
 | Lambda | `freshdesk-refund-agent` | Runs the agent (webhook + AI) |
-| API Gateway (HTTP) | `mv31sm4tpa` | **Primary** trigger — Freshdesk webhook endpoint |
-| EventBridge rule | `freshdesk-refund-poller` | Optional polling fallback — **kept DISABLED** |
+| API Gateway (HTTP) | `mv31sm4tpa` | Webhook endpoint (used when an automation rule is available) |
+| EventBridge rule | `freshdesk-refund-poller` | **ACTIVE trigger** — `rate(5 minutes)` polling |
 | Secrets Manager | `freshdesk/refund-agent` | Freshdesk API key (encrypted) |
 | Bedrock | `us.amazon.nova-lite-v1:0` | The AI model |
 | IAM role | `freshdesk-refund-agent-role` | Scoped: read the secret + invoke Nova |
 
-**Trigger design.** The agent is event-driven: a Freshdesk automation rule calls
-the API Gateway webhook, so it runs only when a real refund ticket arrives. Our
-initial polling design exhausted 1,000 MCP actions in ~2 days, so we redesigned
-around Freshdesk webhooks. (A disabled EventBridge poller remains as a fallback;
-operational detail is in the Operations section.)
+**Trigger design.** Two triggers are supported:
+
+1. **Webhook (event-driven, preferred):** a Freshdesk automation rule calls the
+   API Gateway webhook so the agent runs only on real refund tickets. Requires a
+   working automation rule in the Freshdesk account.
+2. **Poller (fallback, currently ACTIVE):** an EventBridge rule invokes the
+   Lambda every 5 minutes to scan for refund tickets needing action. Used when
+   the automation rule can't be configured/fired.
+
+An earlier 2-minute poll exhausted 1,000 MCP actions in ~2 days, so the poller
+now runs at `rate(5 minutes)` and the agent caches KB policies in memory to keep
+action usage low. If the webhook path is set up, disable the poller to save
+actions.
+
+### Current deployment
+
+| Setting | Value |
+|---------|-------|
+| Freshdesk account | `jimmathewkochittydineshraj` |
+| MCP endpoint | `https://jimmathewkochittydineshraj.freshdesk.com/mcp` |
+| AWS webhook | `https://mv31sm4tpa.execute-api.us-east-1.amazonaws.com/webhooks/freshdesk/refund` |
+| KB policy folder id | `1120000108877` (seeded by `seed_kb.py`) |
+| Region / account | `us-east-1` / `466742534146` |
+
+Verified end-to-end on this account (deployed cloud path): a duplicate-charge
+ticket was assessed by Nova (→ Finance approval, Pending), then a human
+"Approved" note finalized it (→ AI confirmation reply, Resolved, no money moved).
 
 ## Why AWS for Freshdesk
 
@@ -178,7 +200,7 @@ Copy-Item .env.example .env   # fill in the values
 ```
 
 `.env`:
-- `FRESHDESK_DOMAIN` — your subdomain (e.g. `ddretail`)
+- `FRESHDESK_DOMAIN` — your subdomain (e.g. `jimmathewkochittydineshraj`)
 - `FRESHDESK_API_KEY` — API key for local runs (in AWS this comes from Secrets Manager)
 - `FRESHDESK_FINANCE_GROUP_ID` — a real group id, or `0` to skip reassignment
 - `FRESHDESK_REFUND_POLICY_FOLDER_ID` — the KB folder id from step 3
@@ -242,14 +264,16 @@ python src/run_once.py <ticket_id>
 ## Operations
 
 - **Logs:** CloudWatch `/aws/lambda/freshdesk-refund-agent`
-- **Trigger:** the Freshdesk webhook (Rules A/B above). The EventBridge poller
-  `freshdesk-refund-poller` is kept **disabled** — re-enabling it will burn the
-  Freshdesk MCP action cap.
+- **Trigger (current):** the EventBridge poller `freshdesk-refund-poller`,
+  `rate(5 minutes)`, ENABLED. It scans for refund tickets and processes them.
+  If you get a Freshdesk automation rule working, disable the poller with
+  `aws events disable-rule --name freshdesk-refund-poller --region us-east-1`
+  and rely on the webhook instead (fewer MCP actions).
 - **KB caching:** the 4 policy articles are cached in memory per warm Lambda
   container, so the agent does not re-fetch them on every ticket (saves actions).
-- **Re-enable poller (not recommended):**
-  `aws events enable-rule --name freshdesk-refund-poller --region us-east-1` —
-  only with a slow `rate` (e.g. 15-30 min) if you ever need polling.
+- **Change poll interval:** `aws events put-rule --name freshdesk-refund-poller
+  --schedule-expression "rate(10 minutes)" --region us-east-1` (slower = fewer
+  actions).
 - **Rotate the API key:** update the secret with
   `aws secretsmanager put-secret-value --secret-id freshdesk/refund-agent
   --secret-string '{"FRESHDESK_API_KEY":"<new-key>"}'`

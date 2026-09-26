@@ -155,7 +155,18 @@ async def fetch_conversations(session: ClientSession, ticket_id: int, conv_id: s
 # A note counts as human approval when an agent (non-incoming) writes a short
 # note whose text is the approval keyword — not the agent's own decision
 # summary (which merely mentions the word "approve").
-_APPROVAL_RE = re.compile(r"\bapproved?\b", re.IGNORECASE)
+# Match "approve"/"approved" plus common typos and synonyms, so a small
+# misspelling in a short note doesn't block a refund (e.g. "aprroved",
+# "aproved", "approvd", "ok to refund", "authorized", "authorised").
+_APPROVAL_RE = re.compile(
+    r"\b("
+    r"a+p+r*o+v+e*d?"            # approve/approved + typos: aprroved, aproved, approvd
+    r"|authoris?z?ed?"           # authorized / authorised
+    r"|ok\s*(to\s*)?refund"      # "ok refund" / "ok to refund"
+    r"|refund\s*ok"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 def find_human_approval(conversations: list[dict]) -> dict | None:

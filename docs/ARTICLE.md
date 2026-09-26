@@ -226,6 +226,14 @@ their real order and amount, and a clear confirmation once approved.
   aren't re-fetched per ticket. Lesson: with metered third-party APIs, prefer
   event triggers over polling, and treat the vendor's action quota as a
   first-class design constraint.
+- **The skill is portable across Freshdesk accounts.** Because the agent reads
+  its policies from the Solutions KB and its config from environment variables
+  (domain, KB folder id, secret), moving it to a different Freshdesk tenant was
+  three steps: point the domain at the new account, re-seed the KB articles
+  (`seed_kb.py`), and update the Lambda env vars + secret. No code changes. I
+  verified the full assess → approve → resolve flow on a fresh account this way.
+  That portability is the point of a Track 2 "reusable skill" — the logic isn't
+  welded to one tenant.
 
 ---
 

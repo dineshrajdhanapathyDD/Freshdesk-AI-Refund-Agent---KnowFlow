@@ -1,5 +1,5 @@
 """
-Seed the ddretail Freshdesk knowledge base with the Oak & Loom refund
+Seed the Freshdesk knowledge base with the Oak & Loom refund
 policies the agent uses as decision context.
 
 Creates: Solution Category -> Folder -> 4 articles.

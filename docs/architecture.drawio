@@ -1,127 +1,139 @@
-<mxfile host="app.diagrams.net" agent="kiro" version="24.0.0">
-  <diagram id="freshdesk-ai-refund-agent" name="Architecture">
-    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="920" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-
-        <mxCell id="title" value="Freshdesk AI Refund Agent — Architecture" style="text;html=1;fontSize=20;fontStyle=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="450" y="20" width="560" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="subtitle" value="Freshdesk = customer workflow  ·  AWS = agent runtime  ·  Nova = reasoning  ·  MCP = tool connection" style="text;html=1;fontSize=12;align=center;fontColor=#555555;" vertex="1" parent="1">
-          <mxGeometry x="400" y="52" width="660" height="20" as="geometry" />
-        </mxCell>
-
-        <!-- Customer -->
-        <mxCell id="customer" value="Customer&#10;(emails a refund request)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="60" y="230" width="160" height="70" as="geometry" />
-        </mxCell>
-
-        <!-- Freshdesk box -->
-        <mxCell id="fd" value="Freshdesk (customer workflow + system of record)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="300" y="110" width="320" height="470" as="geometry" />
-        </mxCell>
-        <mxCell id="fd-ticket" value="Ticket&#10;(refund request)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="330" y="150" width="120" height="55" as="geometry" />
-        </mxCell>
-        <mxCell id="fd-kb" value="Solutions / KB&#10;4 refund policies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="470" y="150" width="120" height="55" as="geometry" />
-        </mxCell>
-        <mxCell id="fd-rule" value="Automation Rule&#10;subject: refund / charged / payment&#10;-&gt; Trigger Webhook (POST)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="330" y="230" width="260" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="fd-mcp" value="Freshdesk Product MCP&#10;(REST v2, API-key auth)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="330" y="315" width="260" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="fd-human" value="Human approver&#10;adds private note: &quot;Approved&quot; (authorizes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="330" y="390" width="260" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="fd-notes" value="Private notes = agent reasoning&#10;Public replies = AI customer messages&#10;Tags / status = workflow state" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;align=left;" vertex="1" parent="1">
-          <mxGeometry x="330" y="460" width="260" height="70" as="geometry" />
-        </mxCell>
-
-        <!-- AWS box -->
-        <mxCell id="aws" value="AWS (us-east-1) — agent runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="700" y="90" width="660" height="520" as="geometry" />
-        </mxCell>
-
-        <mxCell id="apigw" value="API Gateway (HTTP)&#10;/webhooks/freshdesk/refund&#10;PRIMARY TRIGGER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="730" y="150" width="190" height="70" as="geometry" />
-        </mxCell>
-
-        <mxCell id="eventbridge" value="EventBridge poller&#10;rate(2 min) — DISABLED&#10;(fallback only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#999999;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="730" y="250" width="190" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="lambda" value="AWS Lambda&#10;freshdesk-refund-agent&#10;(Python 3.13)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1010" y="185" width="200" height="80" as="geometry" />
-        </mxCell>
-
-        <mxCell id="secrets" value="Secrets Manager&#10;freshdesk/refund-agent&#10;(API key, encrypted)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
-          <mxGeometry x="1010" y="310" width="200" height="65" as="geometry" />
-        </mxCell>
-
-        <mxCell id="bedrock" value="Amazon Bedrock — Nova Lite&#10;analyzes request + drafts replies&#10;(recommends; does not authorize)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1010" y="410" width="200" height="80" as="geometry" />
-        </mxCell>
-
-        <mxCell id="cw" value="CloudWatch Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
-          <mxGeometry x="730" y="410" width="190" height="50" as="geometry" />
-        </mxCell>
-
-        <!-- Flows -->
-        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="customer" target="fd-ticket">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e1l" value="1. email refund" style="text;html=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="95" y="185" width="130" height="20" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="fd-rule" target="apigw">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e2l" value="2. webhook on new refund" style="text;html=1;fontSize=11;align=center;" vertex="1" parent="1">
-          <mxGeometry x="600" y="200" width="130" height="30" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="apigw" target="lambda">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e3b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#999999;" edge="1" parent="1" source="eventbridge" target="lambda">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;startArrow=block;" edge="1" parent="1" source="lambda" target="fd-mcp">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e4l" value="3. read ticket + KB,&#10;post notes + replies" style="text;html=1;fontSize=11;align=center;" vertex="1" parent="1">
-          <mxGeometry x="620" y="300" width="120" height="30" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="lambda" target="secrets">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;startArrow=block;" edge="1" parent="1" source="lambda" target="bedrock">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e6l" value="4. analyze + draft reply" style="text;html=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="1215" y="345" width="130" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="lambda" target="cw">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="fd-human" target="fd-notes">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e8l" value="5. human authorizes -&gt; agent confirms + resolves" style="text;html=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="600" y="440" width="120" height="30" as="geometry" />
-        </mxCell>
-
-        <mxCell id="legend" value="Flow:  1 customer emails -&gt; ticket.  2 Freshdesk automation rule calls the API Gateway webhook (event-driven; poller stays DISABLED to conserve MCP actions).  3 Lambda reads ticket + KB over MCP.  4 Nova analyzes, determines approval routing, drafts the reply.  5 Human writes 'Approved' to AUTHORIZE -&gt; agent posts confirmation, resolves.  Money movement is a [STUB] integration point — the agent never moves money; human authorization is a hard gate." style="text;html=1;fontSize=11;align=left;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;spacing=6;" vertex="1" parent="1">
-          <mxGeometry x="60" y="640" width="1300" height="70" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="freshdesk-ai-refund-agent" name="Architecture">
+        <mxGraphModel dx="536" dy="299" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="920" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="Freshdesk AI Refund Agent — Architecture" style="text;html=1;fontSize=20;fontStyle=1;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="610" y="210" width="560" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Freshdesk = customer workflow  ·  AWS = agent runtime  ·  Nova = reasoning  ·  MCP = tool connection" style="text;html=1;fontSize=12;align=center;fontColor=#555555;" vertex="1" parent="1">
+                    <mxGeometry x="560" y="242" width="660" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="Customer&#10;(emails a refund request)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="220" y="420" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Freshdesk (customer workflow + system of record)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="460" y="300" width="320" height="470" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="Ticket&#10;(refund request)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="340" width="120" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Solutions / KB&#10;4 refund policies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="630" y="340" width="120" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Automation Rule&#10;subject: refund / charged / payment&#10;-&gt; Trigger Webhook (POST)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="420" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="Freshdesk Product MCP&#10;(REST v2, API-key auth)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="505" width="260" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="Human approver&#10;adds private note: &quot;Approved&quot; (authorizes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="580" width="260" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="Private notes = agent reasoning&#10;Public replies = AI customer messages&#10;Tags / status = workflow state" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="650" width="260" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="AWS (us-east-1) — agent runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="860" y="280" width="660" height="520" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="API Gateway (HTTP)&#10;/webhooks/freshdesk/refund&#10;PRIMARY TRIGGER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="890" y="340" width="190" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="EventBridge poller&#10;rate(2 min) — DISABLED&#10;(fallback only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#999999;dashed=1;" vertex="1" parent="1">
+                    <mxGeometry x="890" y="430" width="190" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="AWS Lambda&#10;freshdesk-refund-agent&#10;(Python 3.13)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="1170" y="375" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="Secrets Manager&#10;freshdesk/refund-agent&#10;(API key, encrypted)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+                    <mxGeometry x="1170" y="500" width="200" height="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="Amazon Bedrock — Nova Lite&#10;analyzes request + drafts replies&#10;(recommends; does not authorize)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="1170" y="600" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="CloudWatch Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+                    <mxGeometry x="890" y="600" width="190" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="4" target="6">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="455"/>
+                            <mxPoint x="480" y="367.5"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="20" value="1. email refund" style="text;html=1;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="255" y="375" width="130" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="8" target="13">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="870" y="450"/>
+                            <mxPoint x="870" y="375"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="22" value="2. webhook on new refund" style="text;html=1;fontSize=11;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="390" width="130" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="13" target="15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#999999;" edge="1" parent="1" source="14" target="15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;startArrow=block;" edge="1" parent="1" source="15" target="9">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1270" y="490"/>
+                            <mxPoint x="620" y="490"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="26" value="3. read ticket + KB,&#10;post notes + replies" style="text;html=1;fontSize=11;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="780" y="490" width="120" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="15" target="16">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1290" y="480"/>
+                            <mxPoint x="1290" y="480"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="28" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;startArrow=block;" edge="1" parent="1" source="15" target="17">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1400" y="415"/>
+                            <mxPoint x="1400" y="640"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="29" value="4. analyze + draft reply" style="text;html=1;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="1375" y="535" width="130" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="15" target="18">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1130" y="415"/>
+                            <mxPoint x="1130" y="625"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;" edge="1" parent="1" source="10" target="11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="5. human authorizes -&gt; agent confirms + resolves" style="text;html=1;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="660" width="120" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;innerLoopWaypoints=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1520.0000000000005" y="847.5" as="sourcePoint"/>
+                        <mxPoint x="1520.0000000000005" y="830" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

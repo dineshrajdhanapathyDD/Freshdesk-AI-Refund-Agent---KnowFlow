@@ -7,6 +7,7 @@ Run: uvicorn webhook_server:app --host 0.0.0.0 --port 8000
 """
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -58,7 +59,7 @@ def _parse_amount(text: str) -> float:
 
 def _order_age_days(ticket: dict) -> int:
     """
-    ddretail's ticket form has no order-age field, so approximate order age
+    The ticket form has no order-age field, so approximate order age
     with how long ago the ticket was created. Swap in a real order-date
     custom field here if/when the form captures one.
     """
@@ -76,7 +77,7 @@ def extract_refund_request(ticket: dict) -> tuple[float, int]:
     """
     Pull the requested refund amount and order age (in days) off the ticket.
 
-    ddretail's real tickets have no structured cf_refund_amount field — the
+    Real tickets have no structured cf_refund_amount field — the
     amount lives in the email body (e.g. "please refund Rs. 1200"). So we
     parse the subject + description text. If a structured custom field is
     added later, prefer it over the text parse.
@@ -114,7 +115,7 @@ def build_refund_signals(ticket: dict) -> dict:
     """
     Turn a raw ticket into the normalized signals assess_refund() consumes.
 
-    ddretail tickets carry no structured payment fields, so we extract what we
+    Tickets carry no structured payment fields, so we extract what we
     can from the email text (order id, transaction id, amount, duplicate hint)
     and record which verification fields we could NOT confirm — those drive the
     Payment Verification policy toward manual investigation.
@@ -354,12 +355,69 @@ async def health():
     return {"ok": True}
 
 
+def _extract_ticket_id(payload, query_params) -> int | None:
+    """
+    Find a ticket id from whatever shape Freshdesk sends. Handles:
+      - {"ticket_id": 7} / {"id": 7}
+      - nested: {"ticket": {"id": 7}}, {"freshdesk_webhook": {"ticket_id": 7}},
+        {"data": {"ticket_id": 7}}
+      - a bare string / number body
+      - query string ?ticket_id=7
+      - ignores unrendered placeholders like "{{ticket.id}}"
+    """
+    def as_id(v):
+        if v is None:
+            return None
+        s = str(v).strip()
+        if not s or "{{" in s or "}}" in s:  # placeholder that didn't render
+            return None
+        return int(s) if s.isdigit() else None
+
+    # 1. Query param
+    if query_params:
+        got = as_id(query_params.get("ticket_id") or query_params.get("id"))
+        if got:
+            return got
+
+    # 2. Dict payloads (recursively scan common keys)
+    if isinstance(payload, dict):
+        for key in ("ticket_id", "id", "ticketId"):
+            got = as_id(payload.get(key))
+            if got:
+                return got
+        for container in ("ticket", "freshdesk_webhook", "data", "payload"):
+            inner = payload.get(container)
+            if isinstance(inner, dict):
+                for key in ("ticket_id", "id", "ticketId"):
+                    got = as_id(inner.get(key))
+                    if got:
+                        return got
+
+    # 3. Bare value (number or numeric string)
+    got = as_id(payload)
+    if got:
+        return got
+
+    return None
+
+
 @app.post("/webhooks/freshdesk/refund")
 async def refund_webhook(request: Request):
-    payload = await request.json()
-    ticket_id = payload.get("ticket_id") or payload.get("id")
+    # Accept JSON, form, or raw bodies — don't assume Content-Type.
+    payload = None
+    try:
+        payload = await request.json()
+    except Exception:  # noqa: BLE001
+        try:
+            raw = (await request.body()).decode("utf-8", "ignore").strip()
+            payload = json.loads(raw) if raw.startswith(("{", "[")) else raw
+        except Exception:  # noqa: BLE001
+            payload = None
+
+    ticket_id = _extract_ticket_id(payload, dict(request.query_params))
     if not ticket_id:
-        return {"ok": False, "error": "no ticket_id in payload"}
+        log.warning("Webhook received but no ticket id found. Payload=%r", payload)
+        return {"ok": False, "error": "no ticket_id found in payload or query"}
 
     if RUNNING_IN_LAMBDA:
         # Process synchronously — the container is frozen after we return.
