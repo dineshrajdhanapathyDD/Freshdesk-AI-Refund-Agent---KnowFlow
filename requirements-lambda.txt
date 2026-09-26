@@ -1,0 +1,4 @@
+fastapi
+mangum
+mcp==1.28.1
+python-dotenv
